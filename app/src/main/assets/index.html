@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repetidor de Voz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#ffffff;--bg2:#f5f4f0;--text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
+      --border:rgba(0,0,0,0.15);--border2:rgba(0,0,0,0.3);--r:8px;--rl:12px;
+      --green:#639922;--greend:#3B6D11;--greenl:#EAF3DE;--greenb:#C0DD97;--amber:#BA7517;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:#1e1e1c;--bg2:#2a2a28;--text:#f0ede6;--text2:#a8a79f;--text3:#6b6a65;
+        --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.25);
+        --greenl:#1a2e0a;--greenb:#2e5010;
+      }
+    }
+    body { font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:2.5rem 1.5rem 4rem; }
+    .wrap { width:100%;max-width:600px;display:flex;flex-direction:column;gap:1.2rem; }
+    .header { display:flex;align-items:baseline;gap:12px; }
+    h1 { font-size:26px;font-weight:800;letter-spacing:-0.5px; }
+    .badge { font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:3px 8px;border-radius:var(--r);background:var(--bg2);color:var(--text2);border:0.5px solid var(--border);text-transform:uppercase;letter-spacing:.05em; }
+    .badge.live { background:var(--greenl);color:var(--greend);border-color:var(--greenb);animation:blink 1.4s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:.5} }
+    textarea { width:100%;min-height:150px;resize:vertical;font-family:'DM Mono',monospace;font-size:14px;line-height:1.75;padding:14px 16px;border-radius:var(--rl);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s; }
+    textarea:focus { border-color:var(--green);box-shadow:0 0 0 3px rgba(99,153,34,.15); }
+    .char-count { font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);text-align:right;margin-top:5px; }
+    .controls { display:flex;gap:8px;flex-wrap:wrap; }
+    .btn { display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:0.5px solid var(--border2);background:var(--bg);color:var(--text);transition:background .15s,transform .1s;-webkit-tap-highlight-color:transparent; }
+    .btn:hover { background:var(--bg2); }
+    .btn:active { transform:scale(.96); }
+    .btn.primary { background:var(--green);color:#fff;border-color:var(--greend); }
+    .btn.primary:hover { background:var(--greend); }
+    .btn.danger { background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1; }
+    .btn.danger:hover { background:#F7C1C1; }
+    @media (prefers-color-scheme:dark) {
+      .btn.danger { background:#2a1212;color:#f09595;border-color:#501313; }
+      .btn.danger:hover { background:#3a1818; }
+    }
+    .btn:disabled { opacity:.38;cursor:not-allowed;transform:none; }
+    .status-bar { display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--r);background:var(--bg2);border:0.5px solid var(--border); }
+    .dot { width:8px;height:8px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .3s; }
+    .dot.speaking { background:var(--green);animation:blink .9s infinite; }
+    .dot.paused { background:var(--amber); }
+    .status-text { font-size:13px;color:var(--text2);font-family:'DM Mono',monospace; }
+    .loop-count { margin-left:auto;font-family:'DM Mono',monospace;font-size:12px;color:var(--text3); }
+    .divider { border:none;border-top:0.5px solid var(--border); }
+    .slabel { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px; }
+    .voice-row { display:grid;grid-template-columns:1fr 100px;gap:10px;align-items:end; }
+    @media (max-width:420px) { .voice-row { grid-template-columns:1fr; } }
+    .flabel { font-size:12px;color:var(--text2);display:block;margin-bottom:6px;font-family:'DM Mono',monospace; }
+    select,input[type="text"] { font-family:'Syne',sans-serif;font-size:13px;padding:9px 12px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);width:100%;outline:none; }
+    select:focus,input[type="text"]:focus { border-color:var(--green);box-shadow:0 0 0 3px rgba(99,153,34,.12); }
+    .sliders { display:grid;grid-template-columns:1fr 1fr;gap:14px 20px; }
+    @media (max-width:420px) { .sliders { grid-template-columns:1fr; } }
+    .srow { display:flex;flex-direction:column;gap:6px; }
+    .slabel-row { display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text2);font-family:'DM Mono',monospace; }
+    .slabel-row span:last-child { color:var(--text);font-weight:500; }
+    input[type="range"] { width:100%;accent-color:var(--green);cursor:pointer; }
+    .hint { font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.5;margin-top:8px; }
+    #loading { position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:13px;color:var(--text2);z-index:99; }
+  </style>
+</head>
+<body>
+
+<div id="loading">Iniciando TTS nativo...</div>
+
+<div class="wrap" id="mainContent" style="display:none">
+  <div class="header">
+    <h1>Repetidor de voz</h1>
+    <span class="badge" id="liveBadge">inactivo</span>
+  </div>
+
+  <div>
+    <textarea id="textInput" placeholder="Escribí el texto que querés repetir..."></textarea>
+    <div class="char-count"><span id="charCount">0</span> caracteres</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" id="startBtn" onclick="startLoop()">
+      <i class="ti ti-player-play"></i> Iniciar
+    </button>
+    <button class="btn" id="pauseBtn" onclick="togglePause()" disabled>
+      <i class="ti ti-player-pause"></i> Pausar
+    </button>
+    <button class="btn danger" id="stopBtn" onclick="stopLoop()" disabled>
+      <i class="ti ti-square"></i> Detener
+    </button>
+  </div>
+
+  <div class="status-bar">
+    <div class="dot" id="dot"></div>
+    <span class="status-text" id="statusText">Listo para comenzar</span>
+    <span class="loop-count" id="loopCount"></span>
+  </div>
+
+  <hr class="divider" />
+
+  <div>
+    <div class="slabel">Configuración</div>
+    <div>
+      <label class="flabel" for="langInput">Idioma</label>
+      <input type="text" id="langInput" value="es-AR" placeholder="es-AR" />
+    </div>
+    <p class="hint" style="margin-top:8px">Opciones: es-ES · es-MX · es-AR · en-US</p>
+  </div>
+
+  <div>
+    <div class="slabel">Ajustes</div>
+    <div class="sliders">
+      <div class="srow">
+        <div class="slabel-row"><span>Velocidad</span><span id="rateVal">1.0×</span></div>
+        <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1" />
+      </div>
+      <div class="srow">
+        <div class="slabel-row"><span>Tono</span><span id="pitchVal">1.0</span></div>
+        <input type="range" id="pitchRange" min="0.5" max="2" step="0.1" value="1" />
+      </div>
+      <div class="srow">
+        <div class="slabel-row"><span>Volumen</span><span id="volVal">100%</span></div>
+        <input type="range" id="volRange" min="0" max="1" step="0.05" value="1" />
+      </div>
+      <div class="srow">
+        <div class="slabel-row"><span>Pausa entre repeticiones</span><span id="pauseVal">1.0s</span></div>
+        <input type="range" id="pauseRange" min="0" max="5" step="0.5" value="1" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── ESTADO ──
+  let isRunning   = false;
+  let isPaused    = false;
+  let loopCounter = 0;
+  let pauseTO     = null;
+  let ttsReady    = false;
+
+  const textInput  = document.getElementById('textInput');
+  const langInput  = document.getElementById('langInput');
+  const startBtn   = document.getElementById('startBtn');
+  const pauseBtn   = document.getElementById('pauseBtn');
+  const stopBtn    = document.getElementById('stopBtn');
+  const dot        = document.getElementById('dot');
+  const statusText = document.getElementById('statusText');
+  const loopCount  = document.getElementById('loopCount');
+  const liveBadge  = document.getElementById('liveBadge');
+  const rateR      = document.getElementById('rateRange');
+  const pitchR     = document.getElementById('pitchRange');
+  const volR       = document.getElementById('volRange');
+  const pauseR     = document.getElementById('pauseRange');
+
+  pitchR.value = 1.0;
+  document.getElementById('pitchVal').textContent = '1.0';
+
+  textInput.addEventListener('input', ()=> document.getElementById('charCount').textContent = textInput.value.length);
+  rateR.addEventListener('input',  ()=> document.getElementById('rateVal').textContent  = parseFloat(rateR.value).toFixed(1)+'×');
+  pitchR.addEventListener('input', ()=> document.getElementById('pitchVal').textContent = parseFloat(pitchR.value).toFixed(1));
+  volR.addEventListener('input',   ()=> document.getElementById('volVal').textContent   = Math.round(volR.value*100)+'%');
+  pauseR.addEventListener('input', ()=> document.getElementById('pauseVal').textContent = parseFloat(pauseR.value).toFixed(1)+'s');
+
+  // ── CALLBACKS DESDE KOTLIN ──
+  // Llamado por MainActivity cuando el servicio TTS está listo
+  function onNativeTtsReady() {
+    ttsReady = true;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'flex';
+  }
+
+  // Llamado por MainActivity cuando el TTS termina de hablar una utterance
+  // Aquí encadenamos la siguiente repetición
+  function onNativeTtsDone() {
+    if (!isRunning || isPaused) return;
+    setStatus('', 'Esperando...');
+    AndroidTTS.updateNotificationStatus('Esperando...');
+    pauseTO = setTimeout(()=>{
+      if (isRunning && !isPaused) runLoop();
+    }, parseFloat(pauseR.value) * 1000);
+  }
+
+  // ── STATUS ──
+  function setStatus(state, text) {
+    dot.className = 'dot' + (state ? ' ' + state : '');
+    statusText.textContent = text;
+  }
+
+  // ── LOOP ──
+  function runLoop() {
+    if (!isRunning || isPaused) return;
+    const text = textInput.value.trim();
+    if (!text) { stopLoop(); return; }
+
+    loopCounter++;
+    loopCount.textContent = 'Repetición #' + loopCounter;
+    setStatus('speaking', 'Hablando...');
+    AndroidTTS.updateNotificationStatus('Hablando... (rep. ' + loopCounter + ')');
+
+    // Llamar al TTS nativo vía el bridge
+    AndroidTTS.speak(
+      text,
+      parseFloat(rateR.value),
+      parseFloat(pitchR.value),
+      parseFloat(volR.value),
+      (langInput.value || 'es-AR').trim()
+    );
+    // El callback onNativeTtsDone() va a encadenar la siguiente cuando termine
+  }
+
+  function startLoop() {
+    if (isRunning || !ttsReady) return;
+    if (!textInput.value.trim()) { setStatus('', 'Escribí algún texto primero'); return; }
+    isRunning = true; isPaused = false; loopCounter = 0;
+    loopCount.textContent = '';
+    startBtn.disabled = true; pauseBtn.disabled = false; stopBtn.disabled = false;
+    pauseBtn.innerHTML = '<i class="ti ti-player-pause"></i> Pausar';
+    liveBadge.textContent = 'en vivo'; liveBadge.className = 'badge live';
+    runLoop();
+  }
+
+  function togglePause() {
+    if (!isRunning) return;
+    if (!isPaused) {
+      isPaused = true;
+      clearTimeout(pauseTO);
+      AndroidTTS.pause();
+      setStatus('paused', 'Pausado');
+      AndroidTTS.updateNotificationStatus('Pausado');
+      pauseBtn.innerHTML = '<i class="ti ti-player-play"></i> Reanudar';
+      liveBadge.textContent = 'pausado'; liveBadge.className = 'badge';
+    } else {
+      isPaused = false;
+      pauseBtn.innerHTML = '<i class="ti ti-player-pause"></i> Pausar';
+      liveBadge.textContent = 'en vivo'; liveBadge.className = 'badge live';
+      runLoop(); // Reanudar desde el principio de la utterance actual
+    }
+  }
+
+  function stopLoop() {
+    isRunning = false; isPaused = false;
+    clearTimeout(pauseTO);
+    AndroidTTS.stop();
+    startBtn.disabled = false; pauseBtn.disabled = true; stopBtn.disabled = true;
+    pauseBtn.innerHTML = '<i class="ti ti-player-pause"></i> Pausar';
+    liveBadge.textContent = 'inactivo'; liveBadge.className = 'badge';
+    setStatus('', 'Detenido');
+    AndroidTTS.updateNotificationStatus('Detenido');
+    loopCount.textContent = loopCounter > 0 ? 'Total: ' + loopCounter + ' repeticiones' : '';
+    loopCounter = 0;
+  }
+
+  // Fallback: si después de 3s el servicio no respondió, igual mostrar la UI
+  setTimeout(()=>{
+    if (!ttsReady) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'flex';
+      setStatus('', 'TTS no disponible');
+    }
+  }, 3000);
+</script>
+</body>
+</html>
